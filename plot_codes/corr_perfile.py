@@ -1,17 +1,22 @@
 import pandas as pd
 import numpy as np
 import sys, os
-from scipy.stats import pearsonr
+from scipy.stats import pearsonr, spearmanr
+from sklearn.metrics import root_mean_squared_error
 
 # file = sys.argv[1] # path of pred/metrics file
 
 fldr = sys.argv[1]
 
 def create_df(inp):
+    print(inp)
     #### process the pred file
     df= pd.read_csv(inp, sep=",", header=None, names= ['spkrs','acc','F1_score','avg_proba','positive_pred'])
     df['spkrs'] = df['spkrs'].str.replace('.csv','')
     df['spkrs'] = df['spkrs'].str.replace('file_name=','')
+    df['spkrs'] = df['spkrs'].str.replace('_digi','')
+    df['spkrs'] = df['spkrs'].str.replace('_ltrs','')
+    df['spkrs'] = df['spkrs'].str.replace('_cmds','')
     df['spkrs'] = df['spkrs'].str.replace('_B1','')
     df['spkrs'] = df['spkrs'].str.replace('_B2','')
     df['spkrs'] = df['spkrs'].str.replace('_B3','')
@@ -35,7 +40,8 @@ IP_dict = {'M04':.02, 'F03':.06, 'M12':.074, 'M01':.15, 'M07':.28, 'F02':.29, 'M
 # IP_dict = {'F02':.29,'F03':.06,'F04':.62, 'M04':.02,'M05':.58, 
 #            'M07':.28,'M09':.86,'M10':.93,'M11':.62,'M12':.074,'M14':.904,'M16':.43}
 IP_dict = dict(sorted(IP_dict.items(), key=lambda item: item[1]))
-x = list(IP_dict.keys())  # Dates or categories on x-axis
+x = list(IP_dict.keys())  # categories on x-axis
+
 y = list(IP_dict.values())
 
 ##   main 
@@ -54,10 +60,18 @@ for file in files:
     print(out_file)
     ##### find correlation co-eff
     with open (out_file, 'a') as f1:
-        f1.write(f'Pearson Correalation fot the file {file} \n')
-        for i in ['acc','F1_score','avg_proba','positive_pred']:
+        f1.write(f'Pearson, Spearman & RMSE for the file {file} \n')
+        for i in ['acc','avg_proba','positive_pred']:
             pc = pearsonr(y, df1[i] )
-            f1.write(f'For {i} : {pc} \n')
+            sp = spearmanr(y, df1[i] )
+            rmse = root_mean_squared_error(y, df1[i])
             # print(f'For {i} : {pc} \n')
+            # print(f'For {i} : {sp} \n')
+            # print(f'For {i} : {rmse} \n')
+            # sys.exit()
+            f1.write(f'For {i} : Pearson = {pc} \n')
+            f1.write(f'For {i} : Spearman = {sp} \n')
+            f1.write(f'For {i} : RMSE = {rmse} \n')
+            
 
 print('Completed !!!!')
